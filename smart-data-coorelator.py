@@ -79,6 +79,7 @@ def process_file(opr_dump_path, coord):
 
 
 def download_and_process_data_for_coordinate(coord, base_url):
+    st.write(f"Fetching MSC 50 data for {coord} from: {base_url}")
     os.makedirs('./downloads', exist_ok=True)
     os.makedirs('./extracted', exist_ok=True)
     coord_to_grid_point = load_dict_from_pickle('coords_dict.pkl')
@@ -354,6 +355,7 @@ else:
     st.write("No valid coordinates found in SmartAtlantic data.")
     smartatlantic_coord = None
 
+
 years = range(df_smartatlantic['time'].dt.year.min(), df_smartatlantic['time'].dt.year.max() + 1)
 
 default_start_year = df_smartatlantic['time'].dt.year.min()
@@ -363,14 +365,19 @@ default_end_year = df_smartatlantic['time'].dt.year.max()
 start_year = st.selectbox("Select Start Year", years, index=years.index(default_start_year))
 end_year = st.selectbox("Select End Year",  years, index=years.index(default_end_year))
 
+base_url ="https://cnodc-cndoc.azure.cloud-nuage.dfo-mpo.gc.ca/public/data-donnees/msc50/atlantic-atlantique/"
+
+coords_dict = load_dict_from_pickle('coords_dict.pkl')
+closest_coord = find_closest_coordinate(smartatlantic_coord, coords_dict)
+st.write(f"Getting the MSC 50 data corresponding to {closest_coord} from {base_url}")
+
 if st.button("Generate Plot"):
     if smartatlantic_coord:
-        coords_dict = load_dict_from_pickle('coords_dict.pkl')
-        closest_coord = find_closest_coordinate(smartatlantic_coord, coords_dict)
+        
         st.write(f"The closest coordinates in MSC 50 dataset were found to be {closest_coord}")
         if closest_coord:
-            csv_file = download_and_process_data_for_coordinate(closest_coord, base_url="https://cnodc-cndoc.azure.cloud-nuage.dfo-mpo.gc.ca/public/data-donnees/msc50/atlantic-atlantique/")
-            st.write(f"Getting the MSC 50 data corresponding to {closest_coord}")
+            csv_file = download_and_process_data_for_coordinate(closest_coord, base_url)
+            
             if csv_file:
                 # Filter MSC50 data based on selected year range
                 df_filtered = filter_data_for_coordinate(csv_file)
